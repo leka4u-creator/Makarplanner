@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Toetsplanner">
+<meta name="theme-color" content="#0a0a12">
+<title>Toetsweek Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:#0a0a12;color:#f0eeff;font-family:'Syne',sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
+.topbar{background:#12111fee;backdrop-filter:blur(12px);border-bottom:1px solid #1e1d30;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.logo-title{font-size:20px;font-weight:800;letter-spacing:-1px;}.logo-title span{color:#ffd93d;}
+.logo-sub{font-size:9px;color:#6b69a0;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-top:1px;}
+.tabs{display:flex;background:#12111f;border-bottom:1px solid #1e1d30;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;min-width:60px;padding:11px 4px;border:none;background:transparent;color:#6b69a0;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;}
+.tab.active{color:#f0eeff;border-bottom-color:#ffd93d;}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;}
+.content-inner{max-width:640px;margin:0 auto;}
+.btn{font-family:'Syne',sans-serif;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:all .15s;}
+.btn-primary{background:#4d96ff;color:#fff;padding:10px 16px;font-size:14px;}
+.btn-ghost{background:#1e1d30;color:#a0a0c0;padding:8px 14px;font-size:13px;}
+.btn-danger{background:#ff6b6b22;color:#ff6b6b;padding:7px 12px;font-size:12px;}
+.btn-accent{background:#ffd93d;color:#0a0a12;padding:10px 16px;font-size:14px;}
+.btn-tutor{background:#c77dff22;color:#c77dff;padding:10px 16px;font-size:14px;border:1.5px solid #c77dff44;}
+.btn-sm{padding:6px 12px !important;font-size:12px !important;}
+.btn-full{width:100%;margin-top:8px;padding:12px;}
+input,select,textarea{background:#12111f;border:1.5px solid #1e1d30;border-radius:8px;color:#f0eeff;font-family:'Syne',sans-serif;font-size:15px;padding:11px 12px;width:100%;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:#4d96ff;}
+input[type=color]{padding:3px 6px;height:44px;cursor:pointer;}
+input[type=time]{font-family:monospace;}
+textarea{resize:vertical;min-height:64px;}
+.lbl{font-size:11px;font-weight:700;color:#6b69a0;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.fg{margin-bottom:12px;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat{background:#17162a;border:1px solid #1e1d30;border-radius:12px;padding:12px 8px;text-align:center;}
+.stat-val{font-size:22px;font-weight:800;line-height:1;}.stat-label{font-size:10px;color:#6b69a0;margin-top:3px;}
+.view-sw{display:flex;gap:4px;background:#17162a;border:1px solid #1e1d30;border-radius:10px;padding:3px;margin-bottom:12px;}
+.vbtn{flex:1;padding:7px 4px;border:none;background:transparent;color:#6b69a0;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.vbtn.active{background:#ffd93d;color:#0a0a12;}
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.week-lbl{font-family:monospace;font-size:12px;color:#ffd93d;text-align:center;flex:1;}
+/* day */
+.day-row{background:#17162a;border:1px solid #1e1d30;border-radius:14px;padding:12px;margin-bottom:8px;}
+.day-row.today{border-color:#ffd93d55;background:#1d1b2a;}
+.day-hdr{display:flex;align-items:center;justify-content:space-between;}
+.dn{font-weight:800;font-size:14px;}.dd{font-family:monospace;font-size:11px;color:#6b69a0;margin-left:6px;}
+.today-b{font-size:10px;font-weight:800;color:#ffd93d;letter-spacing:1px;margin-left:4px;}
+.weekend .dn,.weekend .dd{color:#4a4860;}
+.time-blocks{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.test-banner{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:10px;font-size:13px;font-weight:800;}
+/* study pill - timed vs untimed */
+.study-pill{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:600;border:1.5px solid transparent;cursor:pointer;}
+.study-pill.done{opacity:.35;text-decoration:line-through;}
+.study-pill.timed{border-style:solid;border-width:2px;}
+.p-time{font-family:monospace;font-size:10px;background:#00000022;padding:2px 5px;border-radius:4px;flex-shrink:0;}
+.p-sub{font-family:monospace;font-size:10px;flex-shrink:0;}
+.p-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.p-dur{font-family:monospace;font-size:10px;opacity:.7;flex-shrink:0;}
+.p-del{margin-left:3px;font-size:14px;opacity:.5;cursor:pointer;flex-shrink:0;padding:0 2px;}
+/* tutor pill — uses tutor color */
+.tutor-pill{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid transparent;}
+.tutor-pill.done-lesson{opacity:.6;}
+.tutor-pill.paused{opacity:.35;text-decoration:line-through;}
+.t-recurring{font-size:9px;font-weight:800;letter-spacing:1px;background:#00000022;color:inherit;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.t-once{font-size:9px;font-weight:800;letter-spacing:1px;background:#ffd93d22;color:#ffd93d;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.t-paused{font-size:9px;background:#ff6b6b22;color:#ff6b6b;padding:2px 6px;border-radius:4px;flex-shrink:0;font-weight:800;}
+.t-done{font-size:9px;background:#6bcb7722;color:#6bcb77;padding:2px 6px;border-radius:4px;flex-shrink:0;font-weight:800;}
+.t-changed{font-size:9px;background:#ffd93d22;color:#ffd93d;padding:2px 6px;border-radius:4px;flex-shrink:0;font-weight:800;}
+/* overview */
+.sub-card{background:#17162a;border:1px solid #1e1d30;border-radius:14px;padding:14px;margin-bottom:10px;}
+.sub-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sub-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0;}
+.sub-nm{font-weight:800;font-size:15px;flex:1;}
+.cntdwn{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;display:inline-block;margin-bottom:8px;}
+.pb-bg{background:#1e1d30;border-radius:4px;height:7px;overflow:hidden;}
+.pb-fill{height:100%;border-radius:4px;transition:width .4s;}
+.ti{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e1d30;font-size:12px;}
+.ti:last-child{border-bottom:none;}
+.ti-date{font-family:monospace;font-size:10px;color:#6b69a0;min-width:52px;}
+.ti-time{font-family:monospace;font-size:10px;color:#4d96ff;min-width:38px;}
+.ti-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ti-chk{cursor:pointer;font-size:18px;flex-shrink:0;}
+/* tutors tab */
+.tutor-card{background:#1a1428;border:1.5px solid #c77dff33;border-radius:14px;padding:14px;margin-bottom:10px;}
+.tutor-card-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rec-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#c77dff10;border:1px solid #c77dff22;border-radius:8px;margin-bottom:6px;font-size:12px;flex-wrap:wrap;}
+.rec-day{font-family:monospace;font-size:11px;color:#c77dff;min-width:24px;font-weight:700;}
+.rec-time{font-family:monospace;font-size:11px;color:#f0eeff;}
+/* billing tab */
+.bill-card{background:#17162a;border:1px solid #1e1d30;border-radius:14px;padding:14px;margin-bottom:10px;}
+.bill-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.bill-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #1e1d30;font-size:12px;}
+.bill-row:last-child{border-bottom:none;}
+.bill-date{font-family:monospace;font-size:10px;color:#6b69a0;min-width:52px;}
+.bill-dur{font-family:monospace;font-size:11px;color:#6bcb77;min-width:36px;}
+.bill-total{display:flex;justify-content:space-between;padding:10px 0 4px;font-weight:700;font-size:13px;border-top:1px solid #1e1d30;margin-top:4px;}
+/* period picker */
+.period-sw{display:flex;gap:4px;background:#17162a;border:1px solid #1e1d30;border-radius:10px;padding:3px;margin-bottom:16px;}
+.pbtn{flex:1;padding:8px 4px;border:none;background:transparent;color:#6b69a0;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.pbtn.active{background:#4d96ff;color:#fff;}
+/* settings */
+.subject-row{background:#17162a;border:1px solid #1e1d30;border-radius:10px;padding:11px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.td-row{display:flex;align-items:center;gap:6px;background:#12111f;border:1px solid #1e1d30;border-radius:8px;padding:8px 10px;margin-bottom:6px;}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:#000000cc;z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);padding-bottom:env(safe-area-inset-bottom);}
+.modal-bg.hidden{display:none;}
+.modal-box{background:#17162a;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .25s ease;}
+.handle{width:40px;height:4px;background:#2e2b4a;border-radius:2px;margin:0 auto 20px;}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:18px;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;}
+.type-sw{display:flex;gap:4px;background:#12111f;border:1px solid #1e1d30;border-radius:10px;padding:3px;margin-bottom:16px;}
+.type-btn{flex:1;padding:10px 6px;border:none;background:transparent;color:#6b69a0;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.type-btn.active{background:#c77dff;color:#fff;}
+@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:#ffd93d;color:#0a0a12;font-size:28px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 20px #ffd93d55;display:flex;align-items:center;justify-content:center;z-index:100;}
+.fab-t{position:fixed;right:84px;bottom:calc(20px + env(safe-area-inset-bottom));width:50px;height:50px;border-radius:50%;background:#c77dff;color:#fff;font-size:22px;border:none;cursor:pointer;box-shadow:0 4px 18px #c77dff55;display:flex;align-items:center;justify-content:center;z-index:100;}
+.empty{text-align:center;padding:48px 16px;color:#6b69a0;}
+.sec-title{font-size:11px;font-weight:700;color:#6b69a0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+/* month */
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:8px;}
+.m-dname{text-align:center;font-size:10px;font-weight:700;color:#6b69a0;padding:4px 0;}
+.m-cell{min-height:52px;background:#17162a;border:1px solid #1e1d30;border-radius:8px;padding:4px;cursor:pointer;}
+.m-cell.today{border-color:#ffd93d55;}.m-cell.other{opacity:.35;}
+.m-num{font-size:11px;font-weight:700;margin-bottom:2px;}.m-cell.today .m-num{color:#ffd93d;}
+.m-dots{display:flex;flex-wrap:wrap;gap:2px;}
+.m-dot{width:7px;height:7px;border-radius:50%;}.m-dot.test{border-radius:2px;width:8px;height:8px;}
+.m-dot.tutor{border-radius:50%;border:2px solid transparent;background:transparent;}
+select option{background:#17162a;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:#2a2940;border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><div class="logo-title">Toets<span>week</span></div><div class="logo-sub">Studie Planner 📚</div></div>
+  <div style="display:flex;gap:6px;align-items:center;">
+    <span id="pinBadge" style="display:none;font-size:11px;padding:3px 8px;border-radius:20px;background:#ffd93d22;color:#ffd93d;font-family:monospace;font-weight:700;cursor:pointer;" onclick="openPinModal()">🔑</span>
+    <div id="syncBadge" style="font-size:11px;padding:4px 10px;border-radius:20px;background:#6bcb7722;color:#6bcb77;font-family:monospace;font-weight:700;">💾 Opgeslagen</div>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('timeline',this)">📅 Tijdlijn</button>
+  <button class="tab" onclick="switchTab('overview',this)">📊 Per vak</button>
+  <button class="tab" onclick="switchTab('tutors',this)">👩‍🏫 Bijles</button>
+  <button class="tab" onclick="switchTab('billing',this)">💰 Betaling</button>
+  <button class="tab" onclick="switchTab('settings',this)">⚙️ Vakken</button>
+</div>
+<div class="content"><div class="content-inner">
+  <div id="panel-timeline" class="panel">
+    <div class="stats" id="stats"></div>
+    <div class="view-sw">
+      <button class="vbtn active" onclick="setView('week',this)">1 week</button>
+      <button class="vbtn" onclick="setView('2weeks',this)">2 weken</button>
+      <button class="vbtn" onclick="setView('month',this)">Maand</button>
+    </div>
+    <div class="week-nav">
+      <button class="btn btn-ghost btn-sm" onclick="shiftPeriod(-1)">←</button>
+      <div class="week-lbl" id="weekLabel"></div>
+      <button class="btn btn-ghost btn-sm" onclick="shiftPeriod(1)">→</button>
+    </div>
+    <div style="text-align:center;margin-bottom:12px;"><button class="btn btn-ghost btn-sm" onclick="goToday()">📍 Vandaag</button></div>
+    <div id="dayList"></div>
+  </div>
+  <div id="panel-overview" class="panel" style="display:none"></div>
+  <div id="panel-tutors" class="panel" style="display:none"></div>
+  <div id="panel-billing" class="panel" style="display:none">
+    <div style="font-weight:800;font-size:17px;margin-bottom:4px;">💰 Bijles overzicht</div>
+    <div style="font-size:12px;color:#6b69a0;margin-bottom:16px;">Gegeven lessen en uren per bijles</div>
+    <div class="period-sw">
+      <button class="pbtn active" onclick="setBillingPeriod('month',this)">Deze maand</button>
+      <button class="pbtn" onclick="setBillingPeriod('last',this)">Vorige maand</button>
+      <button class="pbtn" onclick="setBillingPeriod('all',this)">Alles</button>
+    </div>
+    <div id="billingDocentFilter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+    <div id="billingList"></div>
+  </div>
+  <div id="panel-settings" class="panel" style="display:none">
+    <div style="font-weight:800;font-size:17px;margin-bottom:14px;">📚 Mijn vakken</div>
+    <div id="subjectList"></div>
+    <button class="btn btn-primary btn-full" onclick="openSubjectModal()">+ Vak toevoegen</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #1e1d30;">
+      <div class="sec-title">Synchronisatie</div>
+      <div style="font-size:12px;color:#6b69a0;margin-bottom:10px;">Zelfde PIN op alle apparaten = zelfde data</div>
+      <button class="btn btn-ghost btn-sm" onclick="openPinModal()">🔑 PIN wijzigen</button>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #1e1d30;">
+      <div class="sec-title">Backup</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="exportData()">📤 Exporteren</button>
+        <button class="btn btn-ghost btn-sm" onclick="importData()">📥 Importeren</button>
+        <button class="btn btn-danger btn-sm" onclick="resetAll()">🗑 Wissen</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<button class="fab-t" onclick="openTutorModal()" title="Bijles">👩‍🏫</button>
+<button class="fab" onclick="openTaskModal()" title="Taak">+</button>
+
+<!-- MODAL: TASK -->
+<div class="modal-bg hidden" id="modalTask">
+  <div class="modal-box">
+    <div class="handle"></div>
+    <div class="modal-title">Studietaak toevoegen</div>
+    <div class="fg"><label class="lbl">Vak</label><select id="fSubject"></select></div>
+    <div class="form-row">
+      <div><label class="lbl">Datum</label><input type="date" id="fDate"></div>
+      <div><label class="lbl">Type</label>
+        <select id="fType">
+          <option value="studie">📖 Studeren</option>
+          <option value="herhaling">🔄 Herhaling</option>
+          <option value="oefenen">✏️ Oefeningen</option>
+          <option value="samenvatting">📝 Samenvatting</option>
+          <option value="toets">🎯 TOETS</option>
+        </select>
+      </div>
+    </div>
+    <!-- Timed toggle -->
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;margin-bottom:8px;border-bottom:1px solid #1e1d30;">
+      <span style="flex:1;font-size:14px;font-weight:600;">⏱ Vaste tijd plannen</span>
+      <button id="timedToggle" class="toggle" onclick="toggleTimed()"></button>
+    </div>
+    <div id="timedFields" style="display:none">
+      <div class="form-row">
+        <div><label class="lbl">Starttijd</label><input type="time" id="fTimeStart"></div>
+        <div><label class="lbl">Duur (min)</label><input type="number" id="fDuration" min="15" max="300" step="15" placeholder="45"></div>
+      </div>
+    </div>
+    <div class="fg"><label class="lbl">Omschrijving</label><textarea id="fText" placeholder="bijv: H3 + H4 leren..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalTask')">Annuleren</button>
+      <button class="btn btn-accent" style="flex:2" onclick="saveTask()">Opslaan ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BIJLES -->
+<div class="modal-bg hidden" id="modalTutor">
+  <div class="modal-box">
+    <div class="handle"></div>
+    <div class="modal-title" id="mTutorTitle">Bijles toevoegen</div>
+    <div class="fg"><label class="lbl">Naam bijles (vak + level)</label><input type="text" id="tName" placeholder="bijv: Wiskunde bijles"></div>
+    <div class="fg"><label class="lbl">Docent naam</label><input type="text" id="tDocent" placeholder="bijv: Kees, Oksana..."></div>
+    <div class="fg"><label class="lbl">Vak (optioneel)</label><select id="tSubject"><option value="">— geen koppeling —</option></select></div>
+    <div class="fg">
+      <label class="lbl">Frequentie</label>
+      <div class="type-sw">
+        <button class="type-btn active" id="tBtnRecurring" onclick="setTutorFreq('recurring')">🔁 Wekelijks</button>
+        <button class="type-btn" id="tBtnOnce" onclick="setTutorFreq('once')">📌 Eenmalig</button>
+      </div>
+    </div>
+    <div id="tFieldsRecurring">
+      <div class="fg"><label class="lbl">Dag van de week</label>
+        <select id="tDow">
+          <option value="1">Maandag</option><option value="2">Dinsdag</option>
+          <option value="3">Woensdag</option><option value="4">Donderdag</option>
+          <option value="5">Vrijdag</option><option value="6">Zaterdag</option>
+          <option value="0">Zondag</option>
+        </select>
+      </div>
+    </div>
+    <div id="tFieldsOnce" style="display:none">
+      <div class="fg"><label class="lbl">Datum</label><input type="date" id="tDate"></div>
+    </div>
+    <div class="form-row">
+      <div><label class="lbl">Starttijd</label><input type="time" id="tTimeStart" value="16:00"></div>
+      <div><label class="lbl">Duur (min)</label><input type="number" id="tDuration" value="60" min="15" max="240" step="15"></div>
+    </div>
+    <div class="form-row">
+      <div><label class="lbl">Kleur</label><input type="color" id="tColor" value="#c77dff"></div>
+      <div><label class="lbl">Prijs per uur (€)</label><input type="number" id="tPrice" min="0" step="0.5" placeholder="0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalTutor')">Annuleren</button>
+      <button class="btn btn-tutor" style="flex:2" onclick="saveTutor()">Opslaan ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LESSON STATUS (mark done/skip) -->
+<div class="modal-bg hidden" id="modalLesson">
+  <div class="modal-box">
+    <div class="handle"></div>
+    <div class="modal-title" id="mLessonTitle">Les aanpassen</div>
+    <div style="font-size:13px;color:#6b69a0;margin-bottom:16px;" id="mLessonSub"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button class="btn" id="lBtnDone" style="padding:12px 4px;font-size:12px;background:#6bcb7722;color:#6bcb77;border:1.5px solid #6bcb7733;" onclick="setLessonStatus('done')">✅ Gegeven</button>
+      <button class="btn" id="lBtnSkip" style="padding:12px 4px;font-size:12px;background:#ff6b6b22;color:#ff6b6b;border:1.5px solid #ff6b6b33;" onclick="setLessonStatus('skipped')">⏸ Skip</button>
+      <button class="btn" id="lBtnPending" style="padding:12px 4px;font-size:12px;background:#1e1d30;color:#a0a0c0;border:1.5px solid #2e2b4a;" onclick="setLessonStatus('pending')">⬜ Gepland</button>
+    </div>
+    <div id="lessonChangeSection">
+      <div class="sec-title">Andere tijd deze les</div>
+      <div class="form-row">
+        <div><label class="lbl">Starttijd</label><input type="time" id="lTimeStart"></div>
+        <div><label class="lbl">Duur (min)</label><input type="number" id="lDuration" min="15" max="240" step="15"></div>
+      </div>
+      <div class="fg"><label class="lbl">Notitie</label><input type="text" id="lNote" placeholder="bijv: bij mij thuis"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalLesson')">Sluiten</button>
+      <button class="btn btn-accent" style="flex:2" onclick="saveLessonOverride()">Opslaan ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SUBJECT -->
+<div class="modal-bg hidden" id="modalSubject">
+  <div class="modal-box">
+    <div class="handle"></div>
+    <div class="modal-title" id="mSubjTitle">Vak toevoegen</div>
+    <div class="form-row">
+      <div><label class="lbl">Naam</label><input type="text" id="sName" placeholder="Nederlands"></div>
+      <div><label class="lbl">Afkorting</label><input type="text" id="sAbbr" maxlength="4" placeholder="NE"></div>
+    </div>
+    <div class="fg"><label class="lbl">Kleur</label><input type="color" id="sColor" value="#4d96ff"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <label class="lbl" style="margin:0">🎯 Toets datums</label>
+      <button class="btn btn-ghost btn-sm" onclick="addTDRow()">+ Datum</button>
+    </div>
+    <div id="tdList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalSubject')">Annuleren</button>
+      <button class="btn btn-accent" style="flex:2" onclick="saveSubject()">Opslaan ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PIN -->
+<div class="modal-bg hidden" id="modalPin">
+  <div class="modal-box">
+    <div class="handle"></div>
+    <div class="modal-title">PIN instellingen</div>
+    <div style="background:#ffd93d18;border:1px solid #ffd93d33;border-radius:10px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:11px;color:#6b69a0;margin-bottom:4px;">HUIDIGE PIN</div>
+      <div id="currentPinDisplay" style="font-family:monospace;color:#ffd93d;font-weight:800;font-size:24px;letter-spacing:4px;">—</div>
+    </div>
+    <div style="font-size:12px;color:#6b69a0;margin-bottom:16px;">Voer dezelfde PIN in op al je apparaten om te synchroniseren.</div>
+    <div class="fg"><label class="lbl">Nieuwe PIN</label>
+      <input type="tel" inputmode="numeric" id="newPinInput" placeholder="minimaal 4 cijfers" maxlength="8"
+        style="font-family:monospace;font-size:22px;text-align:center;letter-spacing:6px;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalPin')">Sluiten</button>
+      <button class="btn btn-accent" style="flex:2" onclick="changePin()">PIN wijzigen ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen" style="position:fixed;inset:0;background:#0a0a12;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+  <div style="font-size:44px;margin-bottom:12px">📚</div>
+  <div style="font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:4px">Toets<span style="color:#ffd93d">week</span></div>
+  <div style="font-size:11px;color:#6b69a0;letter-spacing:2px;text-transform:uppercase;font-family:monospace;margin-bottom:36px">Studie Planner</div>
+  <div style="width:100%;max-width:320px;">
+    <div style="font-size:13px;font-weight:700;color:#a0a0c0;text-align:center;margin-bottom:8px;">Kies een PIN-code</div>
+    <div style="font-size:12px;color:#4a4860;text-align:center;margin-bottom:20px;line-height:1.5;">Gebruik <strong style="color:#ffd93d">dezelfde PIN</strong> op al je apparaten</div>
+    <input id="pinInput" type="tel" inputmode="numeric" placeholder="bijv: 1234" maxlength="8"
+      style="background:#17162a;border:2px solid #1e1d30;border-radius:12px;color:#f0eeff;font-family:monospace;font-size:28px;padding:16px;width:100%;outline:none;text-align:center;letter-spacing:8px;margin-bottom:12px;box-sizing:border-box;"
+      oninput="if(this.value.length>8)this.value=this.value.slice(0,8)"
+      onkeydown="if(event.key==='Enter')enterPin()">
+    <button onclick="enterPin()" style="width:100%;padding:16px;background:#ffd93d;color:#0a0a12;border:none;border-radius:12px;font-family:Syne,sans-serif;font-weight:800;font-size:16px;cursor:pointer;margin-bottom:10px;">Openen →</button>
+    <div id="pinStatus" style="text-align:center;font-size:13px;color:#6b69a0;min-height:20px;font-family:monospace;margin-bottom:16px;"></div>
+    <div style="padding-top:16px;border-top:1px solid #1e1d30;text-align:center;">
+      <div style="font-size:11px;color:#4a4860;margin-bottom:10px;">Of ga door zonder synchronisatie</div>
+      <button onclick="enterWithoutPin()" style="background:#1e1d30;color:#6b69a0;border:none;border-radius:8px;padding:10px 20px;font-family:Syne,sans-serif;font-weight:700;font-size:13px;cursor:pointer;">Lokaal gebruiken</button>
+    </div>
+  </div>
+</div>
+
+<!-- toggle style -->
+<style>
+.toggle{width:44px;height:24px;background:#1e1d30;border-radius:12px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:none;}
+.toggle.on{background:#4d96ff;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}
+.toggle.on::after{left:23px;}
+</style>
+
+<script>
+
+// ══ CONSTANTS ══════════════════════════════════════════
+const SK='toetsplanner_v7';
+const DEFAULT_SUBJECTS=[
+  {id:'ne',name:'Nederlands',abbr:'NE',color:'#ff6b6b',testDates:[]},
+  {id:'en',name:'Engels',abbr:'EN',color:'#4d96ff',testDates:[]},
+  {id:'fa',name:'Frans',abbr:'FA',color:'#ff9f43',testDates:[]},
+  {id:'bi',name:'Biologie',abbr:'BI',color:'#6bcb77',testDates:[]},
+  {id:'ma',name:'Wiskunde',abbr:'MA',color:'#ffd93d',testDates:[]},
+  {id:'na',name:'Natuurkunde',abbr:'NA',color:'#fd79a8',testDates:[]},
+  {id:'sk',name:'Scheikunde',abbr:'SK',color:'#00cec9',testDates:[]},
+  {id:'ge',name:'Geschiedenis',abbr:'GE',color:'#e17055',testDates:[]},
+  {id:'ec',name:'Economie',abbr:'EC',color:'#74b9ff',testDates:[]},
+  {id:'la',name:'Latijn/Grieks',abbr:'LA',color:'#c77dff',testDates:[]},
+];
+const TICONS={studie:'📖',herhaling:'🔄',oefenen:'✏️',samenvatting:'📝',toets:'🎯'};
+const TLABELS={studie:'Studeren',herhaling:'Herhaling',oefenen:'Oefeningen',samenvatting:'Samenvatting',toets:'TOETS'};
+const DNL=['Zo','Ma','Di','Wo','Do','Vr','Za'];
+const DFULL=['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+const MNL=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+
+// ══ STATE ══════════════════════════════════════════════
+// overrides: {tutorId, date, status:'done'|'skipped'|'pending', timeStart, duration, note}
+let S={subjects:[],tasks:[],tutors:[],overrides:[]};
+let pOffset=0,cView='week',cTab='timeline';
+let editSubjId=null,editTutorId=null;
+let lessonTutorId=null,lessonDate=null;
+let tutorFreq='recurring';
+let taskTimed=false;
+let billingPeriod='month';
+
+// ══ UTILS ══════════════════════════════════════════════
+const uid=()=>Math.random().toString(36).slice(2,10);
+const toDS=d=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
+const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
+const addDays=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r;};
+const parseDate=s=>{if(!s)return null;const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);};
+const fmtS=d=>d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+const fmtSY=d=>d.toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'});
+const dBetween=(a,b)=>Math.round((b-a)/86400000);
+const t2m=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m;};
+const m2t=m=>{const h=Math.floor(m/60),r=m%60;return String(h).padStart(2,'0')+':'+String(r).padStart(2,'0');};
+const fmtDur=m=>{if(!m||m<=0)return'';if(m<60)return m+'min';const h=Math.floor(m/60),r=m%60;return h+'u'+(r?r+'min':'');};
+const getSub=id=>S.subjects.find(s=>s.id===id);
+const getTutor=id=>S.tutors.find(t=>t.id===id);
+const getOvr=(tid,ds)=>(S.overrides||[]).find(o=>o.tutorId===tid&&o.date===ds)||null;
+
+function migrateSub(s){
+  if(!s.testDates){s.testDates=s.testDate?[{id:uid(),date:s.testDate,label:'Toets'}]:[];delete s.testDate;}
+  return s;
+}
+// ══ FIREBASE SYNC ══════════════════════════════════════
+const FB = 'https://makarplanner-default-rtdb.europe-west1.firebasedatabase.app';
+let currentPin = null;
+let saveTimer = null;
+
+function setSyncBadge(text, color){
+  const b=document.getElementById('syncBadge');
+  if(!b)return;
+  b.textContent=text; b.style.background=color+'22'; b.style.color=color;
+}
+
+function saveLocal(){
+  try{ localStorage.setItem('tp_'+(currentPin||'local'), JSON.stringify(S)); }catch(e){}
+}
+
+function loadLocal(){
+  const pin = currentPin||'local';
+  // Try all possible key formats (migration from older versions)
+  const keys = ['tp_'+pin, 'tp_cache_'+pin, 'toetsplanner_v6', 'toetsplanner_v5', 'toetsplanner_v4', 'toetsplanner_v3'];
+  for(const key of keys){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) continue;
+      const d=JSON.parse(raw);
+      if(!d||typeof d!=='object'||!d.subjects) continue;
+      d.subjects=(d.subjects||[]).map(migrateSub);
+      d.tasks=d.tasks||[];
+      d.tutors=d.tutors||[];
+      d.overrides=d.overrides||[];
+      S=d;
+      // Migrate to new key
+      saveLocal();
+      return true;
+    }catch(e){}
+  }
+  S={subjects:DEFAULT_SUBJECTS.map(s=>({...s,testDates:[]})),tasks:[],tutors:[],overrides:[]};
+  return false;
+}
+
+async function fbFetch(path, opts={}){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), 4000);
+  try{
+    const r = await fetch(FB+path, {...opts, signal:ctrl.signal});
+    clearTimeout(t);
+    return r;
+  }catch(e){ clearTimeout(t); throw e; }
+}
+
+async function pushToCloud(){
+  if(!currentPin) return;
+  setSyncBadge('⏳ Syncing...','#ffd93d');
+  try{
+    const r = await fbFetch(`/pins/${currentPin}.json`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(S)
+    });
+    setSyncBadge(r.ok ? '☁️ Gesynchroniseerd' : '⚠️ Sync fout', r.ok ? '#6bcb77' : '#ff6b6b');
+  }catch(e){ setSyncBadge('💾 Lokaal (offline)','#ffd93d'); }
+}
+
+async function pullFromCloud(){
+  if(!currentPin) return false;
+  try{
+    const r = await fbFetch(`/pins/${currentPin}.json`);
+    if(!r.ok) return false;
+    const text = await r.text();
+    if(!text || text==='null') return false;
+    const d = JSON.parse(text);
+    if(!d || typeof d !== 'object') return false;
+    // Ensure required fields
+    if(!d.subjects || !Array.isArray(d.subjects)) return false;
+    d.subjects = d.subjects.map(migrateSub);
+    if(!d.tutors) d.tutors=[];
+    if(!d.overrides) d.overrides=[];
+    if(!d.tasks) d.tasks=[];
+    S = d;
+    saveLocal();
+    return true;
+  }catch(e){ return false; }
+}
+
+function save(){
+  saveLocal();
+  setSyncBadge('💾 Opgeslagen','#6bcb77');
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushToCloud, 1000);
+}
+
+function load(){ loadLocal(); }
+
+// ══ PIN ════════════════════════════════════════════════
+function enterPin(){
+  const val = String(document.getElementById('pinInput').value||'').trim();
+  if(!val || val.length < 4){
+    document.getElementById('pinStatus').textContent='⚠️ Minimaal 4 cijfers'; return;
+  }
+  setPinAndLoad(val);
+}
+function enterWithoutPin(){ setPinAndLoad(null); }
+
+async function setPinAndLoad(pin){
+  const status = document.getElementById('pinStatus');
+  currentPin = pin;
+
+  function openApp(){
+    document.getElementById('pinScreen').style.display='none';
+    renderTimeline();
+  }
+
+  if(!pin){
+    loadLocal();
+    openApp();
+    return;
+  }
+
+  try{ document.getElementById('pinInput').disabled=true; }catch(e){}
+
+  // 1. Show local cache immediately (feels instant)
+  const hasLocal = loadLocal();
+  if(hasLocal){
+    openApp(); // open right away with cached data
+  }
+
+  // 2. Fetch from Firebase in background
+  status.textContent='☁️ Synchroniseren...';
+  const ok = await pullFromCloud();
+
+  if(ok){
+    status.textContent='✅ Gesynchroniseerd!';
+    openApp();          // make sure app is visible first
+    renderTimeline();   // then render with fresh cloud data
+    if(cTab==='tutors') renderTutors();
+    if(cTab==='overview') renderOverview();
+  } else if(!hasLocal){
+    status.textContent='✅ Nieuwe planning!';
+    openApp();
+    pushToCloud();
+  } else {
+    status.textContent='✅ Lokaal (cloud offline)';
+    openApp();
+    pushToCloud();
+  }
+
+  document.getElementById('pinBadge').textContent='🔑 '+pin;
+  document.getElementById('pinBadge').style.display='inline-block';
+  sessionStorage.setItem('tp_session_pin', pin);
+}
+
+function openPinModal(){
+  document.getElementById('currentPinDisplay').textContent=currentPin||'(geen)';
+  document.getElementById('newPinInput').value='';
+  document.getElementById('modalPin').classList.remove('hidden');
+}
+
+function changePin(){
+  const np = String(document.getElementById('newPinInput').value||'').trim();
+  if(!np||np.length<4){ alert('Minimaal 4 cijfers'); return; }
+  currentPin=np; save();
+  document.getElementById('pinBadge').textContent='🔑 '+np;
+  sessionStorage.setItem('tp_session_pin',np);
+  closeModal('modalPin');
+  alert('PIN: '+np);
+}
+
+
+
+// ══ TABS/VIEW ══════════════════════════════════════════
+function switchTab(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).style.display='block';
+  el.classList.add('active'); cTab=name;
+  if(name==='timeline')renderTimeline();
+  if(name==='overview')renderOverview();
+  if(name==='tutors')renderTutors();
+  if(name==='billing')renderBilling();
+  if(name==='settings')renderSettings();
+}
+function setView(v,el){cView=v;document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');pOffset=0;renderTimeline();}
+function shiftPeriod(n){pOffset+=n;renderTimeline();}
+function goToday(){pOffset=0;renderTimeline();}
+function getPStart(){
+  const td=today();
+  if(cView==='month')return new Date(td.getFullYear(),td.getMonth()+pOffset,1);
+  const dow=td.getDay(),mon=addDays(td,-(dow===0?6:dow-1));
+  return addDays(mon,pOffset*(cView==='2weeks'?14:7));
+}
+
+// ══ TUTOR HELPERS ══════════════════════════════════════
+function getTutorOcc(ds){
+  if(!S.tutors||!S.tutors.length)return[];
+  const dow=parseDate(ds).getDay();
+  return S.tutors.filter(t=>t.recurring?Number(t.dow)===dow:t.specificDate===ds).map(tutor=>{
+    const ovr=getOvr(tutor.id,ds);
+    return{
+      tutor,ovr,
+      status:ovr?.status||'pending',
+      timeStart:ovr?.timeStart||tutor.timeStart,
+      duration:ovr?.duration||tutor.duration,
+      note:ovr?.note||''
+    };
+  });
+}
+
+// ══ TIMELINE ═══════════════════════════════════════════
+function renderTimeline(){
+  if(!S||!S.subjects)return;
+  const total=(S.tasks||[]).filter(t=>t.type!=='toets').length;
+  const done=(S.tasks||[]).filter(t=>t.type!=='toets'&&t.done).length;
+  const pct=total?Math.round(done/total*100):0;
+  const testSet=new Set();
+  (S.subjects||[]).forEach(s=>(s.testDates||[]).forEach(td=>testSet.add(td.date)));
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-val" style="color:#ffd93d">${pct}%</div><div class="stat-label">Voortgang</div></div>
+    <div class="stat"><div class="stat-val" style="color:#6bcb77">${done}/${total}</div><div class="stat-label">Gedaan</div></div>
+    <div class="stat"><div class="stat-val" style="color:#ff6b6b">${testSet.size}</div><div class="stat-label">Toetsen</div></div>
+  `;
+  cView==='month'?renderMonthView():renderListView();
+}
+
+function renderListView(){
+  if(!S||!S.subjects)return;
+  const ps=getPStart(),days=cView==='2weeks'?14:7,td=today();
+  document.getElementById('weekLabel').textContent=fmtS(ps)+' – '+fmtS(addDays(ps,days-1));
+  const tdMap={};
+  (S.subjects||[]).forEach(sub=>(sub.testDates||[]).forEach(t=>{if(!tdMap[t.date])tdMap[t.date]=[];tdMap[t.date].push({sub,label:t.label});}));
+  const list=document.getElementById('dayList');list.innerHTML='';
+
+  for(let i=0;i<days;i++){
+    const d=addDays(ps,i),ds=toDS(d);
+    const isToday=d.getTime()===td.getTime(),isWE=d.getDay()===0||d.getDay()===6;
+    const studyTasks=(S.tasks||[]).filter(t=>t.date===ds&&t.type!=='toets');
+    const tests=tdMap[ds]||[];
+    const tutorOccs=getTutorOcc(ds);
+
+    const div=document.createElement('div');
+    div.className='day-row'+(isToday?' today':'')+(isWE?' weekend':'');
+    if(tests.length)div.style.borderColor=tests[0].sub.color+'66';
+
+    const hdr=document.createElement('div');hdr.className='day-hdr';
+    hdr.innerHTML=`<div style="display:flex;align-items:center"><span class="dn">${DNL[d.getDay()]}</span><span class="dd">${d.getDate()} ${d.toLocaleDateString('nl-NL',{month:'short'})}</span>${isToday?'<span class="today-b">VANDAAG</span>':''}</div><button class="btn btn-ghost btn-sm" onclick="openTaskModal('${ds}')">+ taak</button>`;
+    div.appendChild(hdr);
+
+    const blocks=[];
+    // Tests
+    tests.forEach(({sub,label})=>blocks.push({t:-1,fn:()=>{
+      const b=document.createElement('div');b.className='test-banner';
+      b.style.cssText=`background:${sub.color};color:#0a0a12;`;
+      b.innerHTML=`<span>🎯</span><span style="font-family:monospace;font-size:11px">${sub.abbr}</span><span style="flex:1">${label||'TOETS'}</span>`;
+      return b;
+    }}));
+
+    // Tutor sessions with color + status
+    tutorOccs.forEach(({tutor,status,timeStart,duration,note,ovr})=>{
+      const color=tutor.color||'#c77dff';
+      const sm=t2m(timeStart)??500;
+      blocks.push({t:sm,fn:()=>{
+        const endM=timeStart&&duration?t2m(timeStart)+parseInt(duration):null;
+        const ts=timeStart?(timeStart+(endM?' – '+m2t(endM):'')):'';
+        const b=document.createElement('div');
+        b.className='tutor-pill'+(status==='done'?' done-lesson':status==='skipped'?' paused':'');
+        b.style.cssText=`background:${color}22;color:${color};border-color:${color}55;`;
+        b.innerHTML=`
+          <span>👩‍🏫</span>
+          ${ts?`<span class="p-time" style="background:${color}22;color:${color}">${ts}</span>`:''}
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tutor.name}${tutor.docent?' · <span style="opacity:.7;font-size:10px">'+tutor.docent+'</span>':''}</span>
+          ${duration?`<span class="p-dur">${fmtDur(parseInt(duration))}</span>`:''}
+          ${tutor.recurring?`<span class="t-recurring" style="background:${color}22">WEKELIJKS</span>`:'<span class="t-once">EENMALIG</span>'}
+          ${status==='done'?'<span class="t-done">✅ GEGEVEN</span>':''}
+          ${status==='skipped'?'<span class="t-paused">⏸ SKIP</span>':''}
+          ${ovr&&ovr.note?`<span class="t-changed">${ovr.note}</span>`:''}
+        `;
+        b.onclick=()=>openLessonModal(tutor.id,ds);
+        return b;
+      }});
+    });
+
+    // Study tasks
+    studyTasks.forEach(task=>{
+      const sub=getSub(task.subject);if(!sub)return;
+      const sm=t2m(task.timeStart)??600;
+      blocks.push({t:sm,fn:()=>{
+        const endM=task.timeStart&&task.duration?t2m(task.timeStart)+parseInt(task.duration):null;
+        const ts=task.timeStart?(task.timeStart+(endM?' – '+m2t(endM):'')):'';
+        const pill=document.createElement('div');
+        pill.className='study-pill'+(task.done?' done':'')+(task.timeStart?' timed':'');
+        pill.style.cssText=`background:${sub.color}20;color:${sub.color};border-color:${sub.color}${task.timeStart?'88':'33'};`;
+        pill.innerHTML=`
+          ${ts?`<span class="p-time" style="color:${sub.color}99">${ts}</span>`:''}
+          <span>${TICONS[task.type]||'📌'}</span>
+          <span class="p-sub">${sub.abbr}</span>
+          <span class="p-text">${task.text||TLABELS[task.type]}${task.duration?' ('+fmtDur(parseInt(task.duration))+')':''}</span>
+          <span class="p-del" onclick="delTask('${task.id}',event)" style="color:#ff6b6b">🗑</span>
+        `;
+        pill.onclick=e=>{if(e.target.classList.contains('p-del'))return;toggleDone(task.id);};
+        return pill;
+      }});
+    });
+
+    if(blocks.length){
+      blocks.sort((a,b)=>a.t-b.t);
+      const wrap=document.createElement('div');wrap.className='time-blocks';
+      blocks.forEach(b=>wrap.appendChild(b.fn()));
+      div.appendChild(wrap);
+    }
+    list.appendChild(div);
+  }
+}
+
+function renderMonthView(){
+  const ps=getPStart(),year=ps.getFullYear(),month=ps.getMonth(),td=today();
+  document.getElementById('weekLabel').textContent=MNL[month]+' '+year;
+  const tdMap={};
+  (S.subjects||[]).forEach(s=>(s.testDates||[]).forEach(t=>{if(!tdMap[t.date])tdMap[t.date]=[];tdMap[t.date].push(s);}));
+  const list=document.getElementById('dayList');list.innerHTML='';
+  const grid=document.createElement('div');grid.className='month-grid';
+  ['Ma','Di','Wo','Do','Vr','Za','Zo'].forEach(n=>{const h=document.createElement('div');h.className='m-dname';h.textContent=n;grid.appendChild(h);});
+  const fo=ps.getDay(),so=fo===0?6:fo-1,gs=addDays(ps,-so);
+  for(let i=0;i<42;i++){
+    const d=addDays(gs,i),ds=toDS(d);
+    const inM=d.getMonth()===month&&d.getFullYear()===year,isT=d.getTime()===td.getTime();
+    const cell=document.createElement('div');cell.className='m-cell'+(isT?' today':'')+(!inM?' other':'');
+    cell.onclick=()=>openTaskModal(ds);
+    const num=document.createElement('div');num.className='m-num';num.textContent=d.getDate();cell.appendChild(num);
+    const dots=document.createElement('div');dots.className='m-dots';
+    (tdMap[ds]||[]).forEach(s=>{const dt=document.createElement('div');dt.className='m-dot test';dt.style.background=s.color;dots.appendChild(dt);});
+    getTutorOcc(ds).filter(o=>o.status!=='skipped').forEach(({tutor})=>{const dt=document.createElement('div');dt.className='m-dot tutor';dt.style.borderColor=tutor.color||'#c77dff';dt.style.background=(tutor.color||'#c77dff')+'33';dots.appendChild(dt);});
+    [...new Set((S.tasks||[]).filter(t=>t.date===ds&&t.type!=='toets').map(t=>t.subject))].slice(0,3).forEach(sid=>{const sub=getSub(sid);if(!sub)return;const dt=document.createElement('div');dt.className='m-dot';dt.style.background=sub.color;dots.appendChild(dt);});
+    cell.appendChild(dots);grid.appendChild(cell);
+  }
+  list.appendChild(grid);
+}
+
+// ══ OVERVIEW ═══════════════════════════════════════════
+function renderOverview(){
+  const panel=document.getElementById('panel-overview');panel.innerHTML='';
+  const td=today();
+  (S.subjects||[]).forEach(sub=>{
+    const stasks=(S.tasks||[]).filter(t=>t.subject===sub.id&&t.type!=='toets').sort((a,b)=>a.date.localeCompare(b.date));
+    const done=stasks.filter(t=>t.done).length,pct=stasks.length?Math.round(done/stasks.length*100):0;
+    const tests=sub.testDates||[];
+    const next=tests.filter(t=>parseDate(t.date)>=td).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    let cntd='',cc='#6b69a0';
+    if(next){const diff=dBetween(td,parseDate(next.date));
+      if(diff===0){cntd='🎯 TOETS VANDAAG!';cc='#ff6b6b';}
+      else if(diff===1){cntd='🔴 Morgen!';cc='#ff6b6b';}
+      else if(diff<=3){cntd=`🟠 Nog ${diff} dagen`;cc='#ffd93d';}
+      else{cntd=`🟢 Nog ${diff} dagen`;cc='#6bcb77';}
+    }
+    const card=document.createElement('div');card.className='sub-card';card.style.borderColor=sub.color+'33';
+    let testsHTML=tests.map(t=>{const d=parseDate(t.date),past=d&&d<td;
+      return`<div class="ti" style="background:${sub.color}${past?'10':'18'};border-radius:8px;padding:6px 8px;border-bottom:none;opacity:${past?.5:1}">
+        <span class="ti-date">${fmtS(parseDate(t.date))}</span><span>🎯</span>
+        <span class="ti-text" style="font-weight:800;color:${sub.color}">${t.label||'Toets'}</span>
+        ${past?'<span style="font-size:10px;color:#6b69a0">geweest</span>':''}
+      </div>`;}).join('');
+    let tasksHTML=stasks.map(t=>`
+      <div class="ti">
+        <span class="ti-date">${fmtS(parseDate(t.date))}</span>
+        ${t.timeStart?`<span class="ti-time">${t.timeStart}</span>`:''}
+        <span>${TICONS[t.type]||'📌'}</span>
+        <span class="ti-text" style="${t.done?'text-decoration:line-through;opacity:.4':''}">${t.text||TLABELS[t.type]}${t.duration?' ('+fmtDur(parseInt(t.duration))+')':''}</span>
+        <span class="ti-chk" onclick="toggleDone('${t.id}');renderOverview();">${t.done?'✅':'⬜'}</span>
+        <span style="cursor:pointer;font-size:14px;opacity:.5" onclick="delTask('${t.id}')">🗑</span>
+      </div>`).join('');
+    card.innerHTML=`
+      <div class="sub-hdr"><div class="sub-dot" style="background:${sub.color}"></div><div class="sub-nm">${sub.name}</div><span style="font-family:monospace;font-size:10px;color:#6b69a0">${sub.abbr}</span></div>
+      ${cntd?`<div class="cntdwn" style="background:${cc}18;color:${cc}">${cntd}</div>`:''}
+      ${testsHTML}
+      ${stasks.length?`<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11px;color:#6b69a0;margin-bottom:4px"><span>Studietaken</span><span>${done}/${stasks.length}</span></div><div class="pb-bg"><div class="pb-fill" style="width:${pct}%;background:${sub.color}"></div></div></div>`:''}
+      ${tasksHTML||(!tests.length?'<div style="font-size:12px;color:#6b69a0;margin:8px 0">Nog geen taken gepland</div>':'')}
+      <button class="btn btn-ghost btn-full" style="font-size:12px;margin-top:8px" onclick="openTaskModal(null,'${sub.id}')">+ Taak voor ${sub.abbr}</button>
+    `;
+    panel.appendChild(card);
+  });
+}
+
+// ══ BILLING TAB ════════════════════════════════════════
+let billingDocentFilter = null;
+
+function setBillingPeriod(p,el){
+  billingPeriod=p;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderBilling();
+}
+
+// Mark a lesson as paid/unpaid
+function toggleLessonPaid(tutorId, date){
+  const ovr = getOvr(tutorId, date);
+  if(!ovr) return;
+  ovr.paid = !ovr.paid;
+  save();
+  renderBilling();
+}
+
+// Mark ALL visible done lessons for a tutor as paid
+function markAllPaid(tutorId, dates){
+  dates.forEach(ds=>{
+    const ovr = getOvr(tutorId, ds);
+    if(ovr && ovr.status==='done') ovr.paid = true;
+  });
+  save();
+  renderBilling();
+}
+
+function renderBilling(){
+  if(!S||!S.tutors) return;
+  const panel=document.getElementById('billingList');
+  panel.innerHTML='';
+  const now=new Date();
+
+  // Date range
+  let fromDate,toDate;
+  if(billingPeriod==='month'){
+    fromDate=new Date(now.getFullYear(),now.getMonth(),1);
+    toDate=new Date(now.getFullYear(),now.getMonth()+1,0);
+  } else if(billingPeriod==='last'){
+    fromDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+    toDate=new Date(now.getFullYear(),now.getMonth(),0);
+  } else {
+    fromDate=new Date(2020,0,1); toDate=new Date(2099,0,1);
+  }
+
+  // Docent filter buttons
+  const allDocents=[...new Set((S.tutors||[]).map(t=>t.docent||'').filter(Boolean))];
+  const filterEl=document.getElementById('billingDocentFilter');
+  if(filterEl){
+    filterEl.innerHTML='';
+    if(allDocents.length>0){
+      const allBtn=document.createElement('button');
+      allBtn.className='pbtn'+(billingDocentFilter===null?' active':'');
+      allBtn.style.cssText='flex:none;padding:6px 12px;font-size:12px;border-radius:20px;';
+      allBtn.textContent='Alle docenten';
+      allBtn.onclick=()=>{billingDocentFilter=null;renderBilling();};
+      filterEl.appendChild(allBtn);
+      allDocents.forEach(d=>{
+        const btn=document.createElement('button');
+        btn.className='pbtn'+(billingDocentFilter===d?' active':'');
+        btn.style.cssText='flex:none;padding:6px 12px;font-size:12px;border-radius:20px;background:#17162a;border:1px solid #1e1d30;';
+        btn.textContent='👤 '+d;
+        btn.onclick=()=>{billingDocentFilter=d;renderBilling();};
+        filterEl.appendChild(btn);
+      });
+    }
+  }
+
+  const tutors=(S.tutors||[]).filter(t=>!billingDocentFilter||(t.docent||'')=== billingDocentFilter);
+  if(!tutors.length){
+    panel.innerHTML='<div class="empty"><div style="font-size:36px">💰</div><div style="font-size:14px;font-weight:700;margin-top:8px">Geen bijlessen</div></div>';
+    return;
+  }
+
+  const docentTotals={};
+  let anyLessons=false;
+
+  tutors.forEach(tutor=>{
+    const color=tutor.color||'#c77dff';
+    const lessons=[];
+
+    if(tutor.recurring){
+      let d=new Date(fromDate);
+      while(d<=toDate){
+        if(d.getDay()===Number(tutor.dow)){
+          const ds=toDS(d);
+          const ovr=getOvr(tutor.id,ds);
+          if((ovr?.status||'pending')==='done'){
+            lessons.push({date:new Date(d),ds,duration:parseInt(ovr?.duration||tutor.duration)||60,note:ovr?.note||'',paid:!!(ovr?.paid)});
+          }
+        }
+        d.setDate(d.getDate()+1);
+      }
+    } else if(tutor.specificDate){
+      const d=parseDate(tutor.specificDate);
+      if(d>=fromDate&&d<=toDate){
+        const ovr=getOvr(tutor.id,tutor.specificDate);
+        if(ovr?.status==='done'){
+          lessons.push({date:d,ds:tutor.specificDate,duration:parseInt(ovr?.duration||tutor.duration)||60,note:ovr?.note||'',paid:!!(ovr?.paid)});
+        }
+      }
+    }
+
+    if(!lessons.length) return;
+    anyLessons=true;
+
+    const paidLessons=lessons.filter(l=>l.paid);
+    const unpaidLessons=lessons.filter(l=>!l.paid);
+    const totalMin=lessons.reduce((s,l)=>s+l.duration,0);
+    const unpaidMin=unpaidLessons.reduce((s,l)=>s+l.duration,0);
+    const price=parseFloat(tutor.pricePerHour||0);
+    const unpaidCost=price*(unpaidMin/60);
+    const totalCost=price*(totalMin/60);
+
+    const docentKey=tutor.docent||'(onbekend)';
+    if(!docentTotals[docentKey])docentTotals[docentKey]={totalMin:0,unpaidMin:0,totalCost:0,unpaidCost:0,hasPricing:false};
+    docentTotals[docentKey].totalMin+=totalMin;
+    docentTotals[docentKey].unpaidMin+=unpaidMin;
+    docentTotals[docentKey].totalCost+=totalCost;
+    docentTotals[docentKey].unpaidCost+=unpaidCost;
+    if(price>0)docentTotals[docentKey].hasPricing=true;
+
+    const sub=tutor.subjectId?getSub(tutor.subjectId):null;
+    const unpaidDates=unpaidLessons.map(l=>l.ds);
+
+    let lessonsHTML=lessons.map(l=>`
+      <div class="bill-row" style="opacity:${l.paid?.6:1}">
+        <span class="bill-date">${fmtS(l.date)}</span>
+        <span style="font-size:13px">${l.paid?'💚':'✅'}</span>
+        <span class="ti-text">${l.note||'Les gegeven'}${l.paid?' <span style="font-size:10px;color:#6bcb77;font-weight:700">BETAALD</span>':''}</span>
+        <span class="bill-dur">${fmtDur(l.duration)}</span>
+        <button onclick="toggleLessonPaid('${tutor.id}','${l.ds}')" style="background:${l.paid?'#ff6b6b22':'#6bcb7722'};color:${l.paid?'#ff6b6b':'#6bcb77'};border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">${l.paid?'↩ Onbetaald':'✓ Betaald'}</button>
+      </div>`).join('');
+
+    const card=document.createElement('div');
+    card.className='bill-card';
+    card.style.borderColor=color+'44';
+    card.innerHTML=`
+      <div class="bill-hdr">
+        <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:14px;color:${color}">${tutor.name}</div>
+          ${tutor.docent?`<div style="font-size:11px;color:#6b69a0;margin-top:1px">👤 ${tutor.docent}</div>`:''}
+        </div>
+        ${sub?`<span style="font-size:11px;color:${sub.color};font-weight:700">${sub.abbr}</span>`:''}
+        ${unpaidLessons.length>0?`<button onclick="markAllPaid('${tutor.id}',${JSON.stringify(unpaidDates)})" style="background:#6bcb7722;color:#6bcb77;border:1px solid #6bcb7733;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">✓ Alles betaald</button>`:''}
+      </div>
+      ${lessonsHTML}
+      <div class="bill-total">
+        <div>
+          <div style="font-size:13px;font-weight:700">${fmtDur(totalMin)} · ${lessons.length} les${lessons.length===1?'':'sen'}</div>
+          ${unpaidLessons.length>0?`<div style="font-size:11px;color:#ff6b6b;margin-top:2px">⚠️ Onbetaald: ${fmtDur(unpaidMin)} (${unpaidLessons.length} les${unpaidLessons.length===1?'':'sen'})</div>`:'<div style="font-size:11px;color:#6bcb77;margin-top:2px">✅ Alles betaald</div>'}
+        </div>
+        ${price?`<div style="text-align:right">
+          ${unpaidCost>0?`<div style="font-size:20px;font-weight:800;color:#ff6b6b">€${unpaidCost.toFixed(2)}</div><div style="font-size:10px;color:#6b69a0">openstaand</div>`:''}
+          ${paidLessons.length>0?`<div style="font-size:12px;color:#6bcb77;margin-top:2px">€${(price*(paidLessons.reduce((s,l)=>s+l.duration,0)/60)).toFixed(2)} betaald</div>`:''}
+        </div>`:''}
+      </div>
+      ${price?`<div style="font-size:11px;color:#6b69a0;margin-top:2px">€${price}/uur × ${(totalMin/60).toFixed(1)}u</div>`:''}
+    `;
+    panel.appendChild(card);
+  });
+
+  // Summary bar (always shown)
+  if(anyLessons){
+    const docentKeys=Object.keys(docentTotals);
+    const grandUnpaidMin=docentKeys.reduce((s,d)=>s+docentTotals[d].unpaidMin,0);
+    const grandUnpaidCost=docentKeys.reduce((s,d)=>s+docentTotals[d].unpaidCost,0);
+    const grandTotalMin=docentKeys.reduce((s,d)=>s+docentTotals[d].totalMin,0);
+    const grandTotalCost=docentKeys.reduce((s,d)=>s+docentTotals[d].totalCost,0);
+    const hasCost=docentKeys.some(d=>docentTotals[d].hasPricing);
+
+    // Per-docent summary table (when showing all and >1 docent)
+    if(!billingDocentFilter && docentKeys.length>1){
+      const summary=document.createElement('div');
+      summary.style.cssText='background:#17162a;border:1px solid #1e1d30;border-radius:14px;padding:14px;margin-bottom:12px;';
+      let rows=docentKeys.map(d=>{
+        const dt=docentTotals[d];
+        return`<div class="bill-row">
+          <span style="font-size:14px">👤</span>
+          <span class="ti-text" style="font-weight:700">${d}</span>
+          <span class="bill-dur">${fmtDur(dt.totalMin)}</span>
+          ${dt.hasPricing?`<div style="text-align:right;min-width:80px">
+            ${dt.unpaidCost>0?`<div style="font-size:12px;color:#ff6b6b;font-weight:700">€${dt.unpaidCost.toFixed(2)} open</div>`:''}
+            ${(dt.totalCost-dt.unpaidCost)>0?`<div style="font-size:11px;color:#6bcb77">€${(dt.totalCost-dt.unpaidCost).toFixed(2)} betaald</div>`:''}
+          </div>`:''}
+        </div>`;
+      }).join('');
+      summary.innerHTML=`<div style="font-weight:800;font-size:14px;margin-bottom:10px;color:#ffd93d">📊 Totaal per docent</div>${rows}`;
+      panel.insertBefore(summary, panel.firstChild);
+    }
+
+    // Grand total bar
+    const totalBar=document.createElement('div');
+    totalBar.style.cssText=`background:#17162a;border:2px solid ${grandUnpaidCost>0?'#ff6b6b':'#6bcb77'}44;border-radius:14px;padding:14px 16px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;`;
+    totalBar.innerHTML=`
+      <div>
+        <div style="font-size:11px;color:#6b69a0;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${billingDocentFilter?'👤 '+billingDocentFilter:'Totaal'}</div>
+        <div style="font-weight:700;font-size:14px;color:#f0eeff">${fmtDur(grandTotalMin)} totaal</div>
+        ${grandUnpaidMin>0&&grandUnpaidMin!==grandTotalMin?`<div style="font-size:12px;color:#ff6b6b;margin-top:2px">⚠️ ${fmtDur(grandUnpaidMin)} onbetaald</div>`:''}
+        ${grandUnpaidMin===0?'<div style="font-size:12px;color:#6bcb77;margin-top:2px">✅ Alles betaald</div>':''}
+      </div>
+      ${hasCost?`<div style="text-align:right">
+        ${grandUnpaidCost>0?`<div style="font-size:11px;color:#6b69a0;margin-bottom:2px">Openstaand</div><div style="font-size:28px;font-weight:800;color:#ff6b6b">€${grandUnpaidCost.toFixed(2)}</div>`:''}
+        ${(grandTotalCost-grandUnpaidCost)>0?`<div style="font-size:12px;color:#6bcb77;margin-top:${grandUnpaidCost>0?4:0}px">€${(grandTotalCost-grandUnpaidCost).toFixed(2)} al betaald</div>`:''}
+        ${grandUnpaidCost===0&&grandTotalCost>0?`<div style="font-size:24px;font-weight:800;color:#6bcb77">€${grandTotalCost.toFixed(2)}</div>`:''}
+      </div>`:''}
+    `;
+    panel.appendChild(totalBar);
+  }
+
+  if(!anyLessons){
+    panel.innerHTML='<div class="empty"><div style="font-size:36px">📭</div><div style="font-size:14px;font-weight:700;margin-top:8px">Geen gegeven lessen</div><div style="font-size:12px;margin-top:6px">Markeer lessen als ✅ Gegeven in de tijdlijn</div></div>';
+  }
+}
+
+
+// ══ TUTORS TAB ═════════════════════════════════════════
+function renderTutors(){
+  const panel=document.getElementById('panel-tutors');panel.innerHTML='';
+  if(!S.tutors||!S.tutors.length){
+    panel.innerHTML='<div class="empty"><div style="font-size:44px">👩‍🏫</div><div style="font-size:16px;font-weight:700;margin-top:12px">Geen bijlessen</div><div style="font-size:13px;margin-top:6px">Druk op 👩‍🏫 om bijles toe te voegen</div></div>';
+    const btn=document.createElement('button');btn.className='btn btn-tutor btn-full';btn.style.marginTop='8px';btn.textContent='+ Bijles toevoegen';btn.onclick=openTutorModal;panel.appendChild(btn);return;
+  }
+  S.tutors.forEach(tutor=>{
+    const sub=tutor.subjectId?getSub(tutor.subjectId):null;
+    const color=tutor.color||'#c77dff';
+    const card=document.createElement('div');card.className='tutor-card';card.style.borderColor=color+'55';
+    const endM=tutor.timeStart&&tutor.duration?t2m(tutor.timeStart)+parseInt(tutor.duration):null;
+    const ts=tutor.timeStart?(tutor.timeStart+(endM?' – '+m2t(endM):'')):'geen tijd';
+    const ovrs=(S.overrides||[]).filter(o=>o.tutorId===tutor.id).sort((a,b)=>a.date.localeCompare(b.date));
+    let ovrsHTML='';
+    if(ovrs.length){
+      ovrsHTML='<div class="sec-title" style="margin-top:12px">Aanpassingen</div>';
+      ovrs.forEach(o=>{
+        const em=o.timeStart&&o.duration?t2m(o.timeStart)+parseInt(o.duration):null;
+        const statusIcon=o.status==='done'?'✅':o.status==='skipped'?'⏸':'📅';
+        ovrsHTML+=`<div class="rec-row">
+          <span class="rec-day">${fmtS(parseDate(o.date))}</span>
+          <span>${statusIcon}</span>
+          ${o.status==='skipped'?'<span class="t-paused">SKIP</span>':`<span class="rec-time">${o.timeStart||''}${em?' – '+m2t(em):''}</span>`}
+          ${o.note?`<span class="t-changed">${o.note}</span>`:''}
+          <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="removeOverride('${tutor.id}','${o.date}')">✕</button>
+        </div>`;
+      });
+    }
+    card.innerHTML=`
+      <div class="tutor-card-hdr">
+        <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0"></div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:15px;color:${color}">${tutor.name}</div>
+          ${tutor.docent?`<div style="font-size:11px;color:#6b69a0;margin-top:1px">👤 ${tutor.docent}</div>`:''}
+        </div>
+        ${tutor.pricePerHour?`<span style="font-size:11px;color:#6bcb77;font-weight:700">€${tutor.pricePerHour}/u</span>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="editTutor('${tutor.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTutor('${tutor.id}')">🗑</button>
+      </div>
+      <div class="rec-row">
+        <span class="rec-day">${tutor.recurring?DFULL[tutor.dow]:(tutor.specificDate?fmtS(parseDate(tutor.specificDate)):'?')}</span>${tutor.docent?`<span style="font-size:11px;color:#6b69a0">👤 ${tutor.docent}</span>`:''}
+        <span class="rec-time">${ts}</span>
+        ${tutor.duration?`<span style="font-family:monospace;font-size:11px;color:#6b69a0">${fmtDur(parseInt(tutor.duration))}</span>`:''}
+        ${sub?`<span style="font-size:11px;color:${sub.color};font-weight:700">${sub.abbr}</span>`:''}
+        ${tutor.recurring?`<span class="t-recurring" style="background:${color}22;color:${color}">WEKELIJKS</span>`:'<span class="t-once">EENMALIG</span>'}
+      </div>
+      ${ovrsHTML}
+    `;
+    panel.appendChild(card);
+  });
+  const btn=document.createElement('button');btn.className='btn btn-tutor btn-full';btn.style.marginTop='8px';btn.textContent='+ Bijles toevoegen';btn.onclick=openTutorModal;panel.appendChild(btn);
+}
+
+// ══ SETTINGS ═══════════════════════════════════════════
+function renderSettings(){
+  const list=document.getElementById('subjectList');list.innerHTML='';
+  (S.subjects||[]).forEach(sub=>{
+    const row=document.createElement('div');row.className='subject-row';
+    row.innerHTML=`
+      <div style="width:12px;height:12px;border-radius:3px;background:${sub.color};flex-shrink:0"></div>
+      <div style="font-weight:700;font-size:14px;flex:1">${sub.name}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        <span style="font-family:monospace;font-size:11px;color:#6b69a0">${sub.abbr}</span>
+        ${(sub.testDates||[]).map(t=>`<span style="font-family:monospace;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;background:${sub.color}22;color:${sub.color}">🎯 ${fmtS(parseDate(t.date))}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn btn-ghost btn-sm" onclick="editSubject('${sub.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="delSubject('${sub.id}')">🗑</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+// ══ TASK MODAL ═════════════════════════════════════════
+function toggleTimed(){
+  taskTimed=!taskTimed;
+  document.getElementById('timedToggle').classList.toggle('on',taskTimed);
+  document.getElementById('timedFields').style.display=taskTimed?'':'none';
+}
+function openTaskModal(dateStr,subjId){
+  const sel=document.getElementById('fSubject');sel.innerHTML='';
+  (S.subjects||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.abbr} – ${s.name}`;sel.appendChild(o);});
+  if(subjId)sel.value=subjId;
+  document.getElementById('fDate').value=dateStr||toDS(today());
+  document.getElementById('fType').value='studie';
+  document.getElementById('fTimeStart').value='';
+  document.getElementById('fDuration').value='';
+  document.getElementById('fText').value='';
+  taskTimed=false;
+  document.getElementById('timedToggle').classList.remove('on');
+  document.getElementById('timedFields').style.display='none';
+  document.getElementById('modalTask').classList.remove('hidden');
+}
+function saveTask(){
+  const subject=document.getElementById('fSubject').value;
+  const date=document.getElementById('fDate').value;
+  const type=document.getElementById('fType').value;
+  const text=document.getElementById('fText').value.trim();
+  const timeStart=taskTimed?(document.getElementById('fTimeStart').value||null):null;
+  const duration=taskTimed?(parseInt(document.getElementById('fDuration').value)||null):null;
+  if(!subject||!date)return;
+  if(type==='toets'){
+    const sub=getSub(subject);
+    if(sub&&!sub.testDates.find(t=>t.date===date)){sub.testDates.push({id:uid(),date,label:text||'Toets'});}
+  } else {
+    S.tasks.push({id:uid(),subject,date,type,text,timeStart,duration,done:false});
+  }
+  save();closeModal('modalTask');
+  if(cTab==='timeline')renderTimeline();
+  if(cTab==='overview')renderOverview();
+  if(cTab==='settings')renderSettings();
+}
+function toggleDone(id){
+  const t=S.tasks.find(t=>t.id===id);if(t){t.done=!t.done;save();}
+  if(cTab==='timeline')renderTimeline();
+}
+function delTask(id,e){
+  if(e)e.stopPropagation();
+  if(!confirm('Taak verwijderen?'))return;
+  S.tasks=S.tasks.filter(t=>t.id!==id);save();
+  if(cTab==='timeline')renderTimeline();
+  if(cTab==='overview')renderOverview();
+}
+
+// ══ LESSON STATUS MODAL ════════════════════════════════
+function openLessonModal(tutorId,dateStr){
+  lessonTutorId=tutorId; lessonDate=dateStr;
+  const tutor=getTutor(tutorId);
+  const ovr=getOvr(tutorId,dateStr);
+  document.getElementById('mLessonTitle').textContent=tutor.name;
+  document.getElementById('mLessonSub').textContent=fmtS(parseDate(dateStr))+' – '+DFULL[parseDate(dateStr).getDay()];
+  document.getElementById('lTimeStart').value=ovr?.timeStart||tutor.timeStart||'';
+  document.getElementById('lDuration').value=ovr?.duration||tutor.duration||60;
+  document.getElementById('lNote').value=ovr?.note||'';
+  // Highlight current status
+  const cur=ovr?.status||'pending';
+  ['Done','Skip','Pending'].forEach(s=>{
+    const btn=document.getElementById('lBtn'+s);
+    if(btn) btn.style.opacity=cur===s.toLowerCase()?'1':'.5';
+  });
+  document.getElementById('modalLesson').classList.remove('hidden');
+}
+function setLessonStatus(status){
+  // Save immediately when status button clicked
+  const timeStart=document.getElementById('lTimeStart').value||null;
+  const duration=parseInt(document.getElementById('lDuration').value)||null;
+  const note=document.getElementById('lNote').value.trim();
+  S.overrides=S.overrides.filter(o=>!(o.tutorId===lessonTutorId&&o.date===lessonDate));
+  S.overrides.push({tutorId:lessonTutorId,date:lessonDate,status,timeStart,duration,note});
+  save();
+  ['Done','Skip','Pending'].forEach(s=>{
+    const btn=document.getElementById('lBtn'+s);
+    if(btn) btn.style.opacity=status===s.toLowerCase()?'1':'.5';
+  });
+  if(cTab==='timeline')renderTimeline();
+  if(cTab==='tutors')renderTutors();
+  if(cTab==='billing')renderBilling();
+}
+function saveLessonOverride(){
+  const timeStart=document.getElementById('lTimeStart').value||null;
+  const duration=parseInt(document.getElementById('lDuration').value)||null;
+  const note=document.getElementById('lNote').value.trim();
+  const existing=getOvr(lessonTutorId,lessonDate);
+  const status=existing?.status||'pending';
+  S.overrides=S.overrides.filter(o=>!(o.tutorId===lessonTutorId&&o.date===lessonDate));
+  if(timeStart||duration||note||status!=='pending'){
+    S.overrides.push({tutorId:lessonTutorId,date:lessonDate,status,timeStart,duration,note});
+  }
+  save();closeModal('modalLesson');
+  if(cTab==='timeline')renderTimeline();
+  if(cTab==='tutors')renderTutors();
+  if(cTab==='billing')renderBilling();
+}
+function removeOverride(tutorId,date){
+  S.overrides=S.overrides.filter(o=>!(o.tutorId===tutorId&&o.date===date));
+  save();renderTutors();if(cTab==='timeline')renderTimeline();if(cTab==='billing')renderBilling();
+}
+
+// ══ TUTOR MODAL ════════════════════════════════════════
+function setTutorFreq(f){
+  tutorFreq=f;
+  document.getElementById('tBtnRecurring').classList.toggle('active',f==='recurring');
+  document.getElementById('tBtnOnce').classList.toggle('active',f==='once');
+  document.getElementById('tFieldsRecurring').style.display=f==='recurring'?'':'none';
+  document.getElementById('tFieldsOnce').style.display=f==='once'?'':'none';
+}
+function fillTutorSel(){
+  const sel=document.getElementById('tSubject');sel.innerHTML='<option value="">— geen koppeling —</option>';
+  (S.subjects||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.abbr} – ${s.name}`;sel.appendChild(o);});
+}
+function openTutorModal(){
+  editTutorId=null;document.getElementById('mTutorTitle').textContent='Bijles toevoegen';
+  fillTutorSel();
+  document.getElementById('tName').value='';document.getElementById('tDocent').value='';document.getElementById('tSubject').value='';
+  document.getElementById('tDow').value='1';document.getElementById('tDate').value=toDS(today());
+  document.getElementById('tTimeStart').value='16:00';document.getElementById('tDuration').value='60';
+  document.getElementById('tColor').value='#c77dff';document.getElementById('tPrice').value='';
+  tutorFreq='recurring';
+  document.getElementById('tBtnRecurring').classList.add('active');document.getElementById('tBtnOnce').classList.remove('active');
+  document.getElementById('tFieldsRecurring').style.display='';document.getElementById('tFieldsOnce').style.display='none';
+  document.getElementById('modalTutor').classList.remove('hidden');
+}
+function editTutor(id){
+  const tutor=getTutor(id);if(!tutor)return;editTutorId=id;
+  document.getElementById('mTutorTitle').textContent='Bijles bewerken';
+  fillTutorSel();
+  document.getElementById('tName').value=tutor.name;document.getElementById('tDocent').value=tutor.docent||'';document.getElementById('tSubject').value=tutor.subjectId||'';
+  document.getElementById('tDow').value=tutor.dow??1;document.getElementById('tDate').value=tutor.specificDate||toDS(today());
+  document.getElementById('tTimeStart').value=tutor.timeStart||'16:00';document.getElementById('tDuration').value=tutor.duration||60;
+  document.getElementById('tColor').value=tutor.color||'#c77dff';document.getElementById('tPrice').value=tutor.pricePerHour||'';
+  tutorFreq=tutor.recurring?'recurring':'once';
+  document.getElementById('tBtnRecurring').classList.toggle('active',tutor.recurring);
+  document.getElementById('tBtnOnce').classList.toggle('active',!tutor.recurring);
+  document.getElementById('tFieldsRecurring').style.display=tutor.recurring?'':'none';
+  document.getElementById('tFieldsOnce').style.display=tutor.recurring?'none':'';
+  document.getElementById('modalTutor').classList.remove('hidden');
+}
+function saveTutor(){
+  const name=document.getElementById('tName').value.trim();
+  if(!name){alert('Vul een naam in');return;}
+  const docent=document.getElementById('tDocent').value.trim();
+  const subjectId=document.getElementById('tSubject').value||null;
+  const color=document.getElementById('tColor').value;
+  const timeStart=document.getElementById('tTimeStart').value||null;
+  const duration=parseInt(document.getElementById('tDuration').value)||null;
+  const pricePerHour=parseFloat(document.getElementById('tPrice').value)||0;
+  const recurring=(tutorFreq==='recurring');
+  const dow=recurring?parseInt(document.getElementById('tDow').value):null;
+  const specificDate=!recurring?(document.getElementById('tDate').value||null):null;
+  if(!recurring&&!specificDate){alert('Kies een datum');return;}
+  const data={name,docent,subjectId,dow,specificDate,color,timeStart,duration,recurring,pricePerHour};
+  if(editTutorId){const t=getTutor(editTutorId);if(t)Object.assign(t,data);}
+  else S.tutors.push({id:uid(),...data});
+  save();closeModal('modalTutor');renderTutors();if(cTab==='timeline')renderTimeline();
+}
+function deleteTutor(id){
+  if(!confirm('Bijles verwijderen?'))return;
+  S.tutors=S.tutors.filter(t=>t.id!==id);S.overrides=S.overrides.filter(o=>o.tutorId!==id);
+  save();renderTutors();if(cTab==='timeline')renderTimeline();if(cTab==='billing')renderBilling();
+}
+
+// ══ SUBJECT MODAL ══════════════════════════════════════
+function openSubjectModal(){
+  editSubjId=null;document.getElementById('mSubjTitle').textContent='Vak toevoegen';
+  document.getElementById('sName').value='';document.getElementById('sAbbr').value='';document.getElementById('sColor').value='#4d96ff';
+  document.getElementById('tdList').innerHTML='';document.getElementById('modalSubject').classList.remove('hidden');
+}
+function editSubject(id){
+  const sub=getSub(id);if(!sub)return;editSubjId=id;
+  document.getElementById('mSubjTitle').textContent='Vak bewerken';
+  document.getElementById('sName').value=sub.name;document.getElementById('sAbbr').value=sub.abbr;document.getElementById('sColor').value=sub.color;
+  const list=document.getElementById('tdList');list.innerHTML='';
+  (sub.testDates||[]).forEach(t=>addTDRow(t.date,t.label,t.id));
+  document.getElementById('modalSubject').classList.remove('hidden');
+}
+function addTDRow(dv='',lv='Toets',rid=null){
+  const list=document.getElementById('tdList');const id=rid||uid();
+  const row=document.createElement('div');row.className='td-row';row.dataset.id=id;
+  row.innerHTML=`<input type="date" value="${dv}" style="flex:1;min-width:0;font-size:13px;padding:8px;" class="td-d"><input type="text" value="${lv}" placeholder="bijv. tussentoets" style="flex:1;min-width:0;font-size:13px;padding:8px;" class="td-l"><button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(row);
+}
+function saveSubject(){
+  const name=document.getElementById('sName').value.trim(),abbr=document.getElementById('sAbbr').value.trim().toUpperCase(),color=document.getElementById('sColor').value;
+  if(!name||!abbr)return;
+  const testDates=[];
+  document.querySelectorAll('#tdList .td-row').forEach(row=>{const date=row.querySelector('.td-d').value,label=row.querySelector('.td-l').value.trim()||'Toets';if(date)testDates.push({id:row.dataset.id,date,label});});
+  if(editSubjId){const s=getSub(editSubjId);if(s){s.name=name;s.abbr=abbr;s.color=color;s.testDates=testDates;}}
+  else S.subjects.push({id:uid(),name,abbr,color,testDates});
+  save();closeModal('modalSubject');renderSettings();if(cTab==='timeline')renderTimeline();if(cTab==='overview')renderOverview();
+}
+function delSubject(id){
+  if(!confirm('Vak verwijderen?'))return;
+  S.subjects=S.subjects.filter(s=>s.id!==id);S.tasks=S.tasks.filter(t=>t.subject!==id);
+  save();renderSettings();
+}
+
+// ══ DATA ═══════════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='toetsplanner.json';a.click();
+}
+function importData(){
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);d.subjects=(d.subjects||[]).map(migrateSub);d.tasks=d.tasks||[];d.tutors=d.tutors||[];d.overrides=d.overrides||[];S=d;save();renderTimeline();alert('Geïmporteerd!');}catch{alert('Ongeldig bestand');}};r.readAsText(e.target.files[0]);};input.click();
+}
+function resetAll(){
+  if(!confirm('Alles wissen?'))return;
+  S={subjects:DEFAULT_SUBJECTS.map(s=>({...s,testDates:[]})),tasks:[],tutors:[],overrides:[]};
+  save();renderTimeline();renderSettings();
+}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+// ══ INIT ═══════════════════════════════════════════════
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.add('hidden');}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg').forEach(m=>m.classList.add('hidden'));});
+const _savedPin = sessionStorage.getItem('tp_session_pin');
+if(_savedPin){ setPinAndLoad(_savedPin); }
+window.addEventListener('beforeunload', ()=>{ if(currentPin) sessionStorage.setItem('tp_session_pin', currentPin); });
+</script>
+</body>
+</html>
