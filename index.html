@@ -209,7 +209,7 @@ select option{background:#17162a;}
 <div class="modal-bg hidden" id="modalTask">
   <div class="modal-box">
     <div class="handle"></div>
-    <div class="modal-title">Studietaak toevoegen</div>
+    <div class="modal-title" id="mTaskTitle">Studietaak toevoegen</div>
     <div class="fg"><label class="lbl">Vak</label><select id="fSubject"></select></div>
     <div class="form-row">
       <div><label class="lbl">Datum</label><input type="date" id="fDate"></div>
@@ -237,7 +237,7 @@ select option{background:#17162a;}
     <div class="fg"><label class="lbl">Omschrijving</label><textarea id="fText" placeholder="bijv: H3 + H4 leren..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modalTask')">Annuleren</button>
-      <button class="btn btn-accent" style="flex:2" onclick="saveTask()">Opslaan ✓</button>
+      <button class="btn btn-accent" style="flex:2" id="taskSaveBtn" onclick="saveTask()">Opslaan ✓</button>
     </div>
   </div>
 </div>
@@ -409,6 +409,7 @@ const MNL=['januari','februari','maart','april','mei','juni','juli','augustus','
 // overrides: {tutorId, date, status:'done'|'skipped'|'pending', timeStart, duration, note}
 let S={subjects:[],tasks:[],tutors:[],overrides:[]};
 let pOffset=0,cView='week',cTab='timeline';
+let editingTaskId=null;
 let editSubjId=null,editTutorId=null;
 let lessonTutorId=null,lessonDate=null;
 let tutorFreq='recurring';
@@ -729,6 +730,7 @@ function renderListView(){
           <span>${TICONS[task.type]||'📌'}</span>
           <span class="p-sub">${sub.abbr}</span>
           <span class="p-text">${task.text||TLABELS[task.type]}${task.duration?' ('+fmtDur(parseInt(task.duration))+')':''}</span>
+          <span class="p-del" onclick="openEditTaskModal('${task.id}');event.stopPropagation();" style="color:#4d96ff;margin-right:1px">✏️</span>
           <span class="p-del" onclick="delTask('${task.id}',event)" style="color:#ff6b6b">🗑</span>
         `;
         pill.onclick=e=>{if(e.target.classList.contains('p-del'))return;toggleDone(task.id);};
@@ -800,6 +802,7 @@ function renderOverview(){
         <span>${TICONS[t.type]||'📌'}</span>
         <span class="ti-text" style="${t.done?'text-decoration:line-through;opacity:.4':''}">${t.text||TLABELS[t.type]}${t.duration?' ('+fmtDur(parseInt(t.duration))+')':''}</span>
         <span class="ti-chk" onclick="toggleDone('${t.id}');renderOverview();">${t.done?'✅':'⬜'}</span>
+        <span style="cursor:pointer;font-size:14px;opacity:.6" onclick="openEditTaskModal('${t.id}');renderOverview();">✏️</span>
         <span style="cursor:pointer;font-size:14px;opacity:.5" onclick="delTask('${t.id}')">🗑</span>
       </div>`).join('');
     card.innerHTML=`
@@ -1114,6 +1117,9 @@ function toggleTimed(){
   document.getElementById('timedFields').style.display=taskTimed?'':'none';
 }
 function openTaskModal(dateStr,subjId){
+  editingTaskId=null;
+  document.getElementById('mTaskTitle').textContent='Studietaak toevoegen';
+  document.getElementById('taskSaveBtn').textContent='Toevoegen ✓';
   const sel=document.getElementById('fSubject');sel.innerHTML='';
   (S.subjects||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.abbr} – ${s.name}`;sel.appendChild(o);});
   if(subjId)sel.value=subjId;
@@ -1127,6 +1133,26 @@ function openTaskModal(dateStr,subjId){
   document.getElementById('timedFields').style.display='none';
   document.getElementById('modalTask').classList.remove('hidden');
 }
+
+function openEditTaskModal(taskId){
+  const task=S.tasks.find(t=>t.id===taskId);
+  if(!task)return;
+  editingTaskId=taskId;
+  document.getElementById('mTaskTitle').textContent='Taak bewerken';
+  document.getElementById('taskSaveBtn').textContent='Opslaan ✓';
+  const sel=document.getElementById('fSubject');sel.innerHTML='';
+  (S.subjects||[]).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=`${s.abbr} – ${s.name}`;sel.appendChild(o);});
+  sel.value=task.subject;
+  document.getElementById('fDate').value=task.date;
+  document.getElementById('fType').value=task.type||'studie';
+  document.getElementById('fText').value=task.text||'';
+  taskTimed=!!(task.timeStart);
+  document.getElementById('timedToggle').classList.toggle('on',taskTimed);
+  document.getElementById('timedFields').style.display=taskTimed?'':'none';
+  document.getElementById('fTimeStart').value=task.timeStart||'';
+  document.getElementById('fDuration').value=task.duration||'';
+  document.getElementById('modalTask').classList.remove('hidden');
+}
 function saveTask(){
   const subject=document.getElementById('fSubject').value;
   const date=document.getElementById('fDate').value;
@@ -1135,7 +1161,16 @@ function saveTask(){
   const timeStart=taskTimed?(document.getElementById('fTimeStart').value||null):null;
   const duration=taskTimed?(parseInt(document.getElementById('fDuration').value)||null):null;
   if(!subject||!date)return;
-  if(type==='toets'){
+
+  if(editingTaskId){
+    // Edit existing task
+    const task=S.tasks.find(t=>t.id===editingTaskId);
+    if(task){
+      task.subject=subject; task.date=date; task.type=type;
+      task.text=text; task.timeStart=timeStart; task.duration=duration;
+    }
+    editingTaskId=null;
+  } else if(type==='toets'){
     const sub=getSub(subject);
     if(sub&&!sub.testDates.find(t=>t.date===date)){sub.testDates.push({id:uid(),date,label:text||'Toets'});}
   } else {
