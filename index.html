@@ -148,7 +148,10 @@ select option{background:#17162a;}
 .time-cols{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;}
 .time-col{display:flex;flex-direction:column;align-items:center;gap:4px;}
 .time-col-label{font-size:10px;color:#6b69a0;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.time-scroll{height:280px;overflow-y:auto;scrollbar-width:none;width:80px;}
+.time-scroll{height:280px;overflow-y:auto;scrollbar-width:none;width:80px;position:relative;}
+.time-col{position:relative;}
+.time-col::after{content:'';position:absolute;top:50%;left:0;right:0;height:56px;transform:translateY(-50%);background:#4d96ff15;border-top:1.5px solid #4d96ff44;border-bottom:1.5px solid #4d96ff44;border-radius:10px;pointer-events:none;z-index:0;}
+.time-item{position:relative;z-index:1;}
 .time-scroll::-webkit-scrollbar{display:none;}
 .time-item{height:56px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:22px;font-weight:700;color:#4a4860;cursor:pointer;border-radius:10px;transition:color .15s,font-size .15s;}
 .time-item.selected{color:#f0eeff;background:#4d96ff33;font-size:28px;font-weight:800;}
@@ -1563,9 +1566,7 @@ window.addEventListener('beforeunload', ()=>{ if(currentPin) sessionStorage.setI
 <div class="time-popup-bg" id="timePickerBg" onclick="closeTimePicker()"></div>
 <div class="time-popup" id="timePickerPopup">
   <div class="time-popup-title">Kies een tijd</div>
-  <div style="position:relative;">
-    <div style="position:absolute;top:50%;left:0;right:0;height:56px;transform:translateY(-50%);background:#4d96ff15;border-top:1.5px solid #4d96ff44;border-bottom:1.5px solid #4d96ff44;border-radius:10px;pointer-events:none;z-index:1;margin:0 4px;"></div>
-  <div class="time-cols" style="position:relative;z-index:2;">
+  <div class="time-cols">
     <div class="time-col">
       <div class="time-col-label">Uur</div>
       <div class="time-scroll" id="hourScroll"></div>
@@ -1575,7 +1576,6 @@ window.addEventListener('beforeunload', ()=>{ if(currentPin) sessionStorage.setI
       <div class="time-col-label">Minuten</div>
       <div class="time-scroll" id="minScroll"></div>
     </div>
-  </div>
   </div>
   <div class="time-popup-actions">
     <button class="btn btn-ghost" style="flex:1" onclick="clearTimePicker()">Wissen</button>
