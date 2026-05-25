@@ -148,10 +148,11 @@ select option{background:#17162a;}
 .time-cols{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;}
 .time-col{display:flex;flex-direction:column;align-items:center;gap:4px;}
 .time-col-label{font-size:10px;color:#6b69a0;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.time-scroll{height:180px;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;width:72px;}
+.time-scroll{height:280px;overflow-y:auto;scrollbar-width:none;width:80px;}
 .time-scroll::-webkit-scrollbar{display:none;}
-.time-item{height:48px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:22px;font-weight:700;color:#4a4860;scroll-snap-align:center;cursor:pointer;border-radius:8px;transition:all .15s;}
-.time-item.selected{color:#f0eeff;background:#4d96ff22;font-size:26px;}
+.time-item{height:56px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:22px;font-weight:700;color:#4a4860;cursor:pointer;border-radius:10px;transition:color .15s,font-size .15s;}
+.time-item.selected{color:#f0eeff;background:#4d96ff33;font-size:28px;font-weight:800;}
+.time-item:hover:not(.selected){color:#a0a0c0;}
 .time-item:hover{color:#a0a0c0;}
 .time-colon{font-size:32px;font-weight:800;color:#f0eeff;padding-bottom:4px;}
 .time-popup-actions{display:flex;gap:8px;}
@@ -1400,6 +1401,9 @@ function closeModal(id){document.getElementById(id).classList.add('hidden');}
 let _timePickerTarget = null;
 let _selectedHour = 16;
 let _selectedMin = 0;
+const ITEM_H = 56; // height of each item in px
+const VISIBLE = 5; // visible items (odd number so center is clear)
+const PAD = Math.floor(VISIBLE/2); // padding items on each side
 
 function getTimeValue(elId){
   const el = document.getElementById(elId);
@@ -1427,7 +1431,9 @@ function openTimePicker(targetId){
   if(cur && cur.includes(':')){
     const [h,m] = cur.split(':').map(Number);
     _selectedHour = h;
-    _selectedMin = m;
+    // Round to nearest 5
+    _selectedMin = Math.round(m/5)*5;
+    if(_selectedMin >= 60) _selectedMin = 55;
   } else {
     _selectedHour = 16;
     _selectedMin = 0;
@@ -1435,11 +1441,10 @@ function openTimePicker(targetId){
   buildScrolls();
   document.getElementById('timePickerPopup').classList.add('open');
   document.getElementById('timePickerBg').classList.add('open');
-  // Scroll to selected after render
   setTimeout(()=>{
-    scrollToSelected('hourScroll', _selectedHour);
-    scrollToSelected('minScroll', _selectedMin);
-  }, 50);
+    snapTo('hourScroll', _selectedHour, false);
+    snapTo('minScroll', _selectedMin/5, false);
+  }, 60);
 }
 
 function buildScrolls(){
@@ -1448,63 +1453,83 @@ function buildScrolls(){
   hScroll.innerHTML = '';
   mScroll.innerHTML = '';
 
-  // Padding items for scroll effect
-  ['','',''].forEach(()=>{
-    const p = document.createElement('div'); p.style.height='48px'; hScroll.appendChild(p);
-    const p2 = document.createElement('div'); p2.style.height='48px'; mScroll.appendChild(p2);
-  });
+  // Add top padding so first item can center
+  for(let i=0;i<PAD;i++){
+    const p = document.createElement('div');
+    p.style.cssText = `height:${ITEM_H}px;flex-shrink:0;`;
+    hScroll.appendChild(p.cloneNode());
+    mScroll.appendChild(p.cloneNode());
+  }
 
   for(let h=0;h<24;h++){
     const item = document.createElement('div');
-    item.className = 'time-item' + (h===_selectedHour?' selected':'');
+    item.className = 'time-item';
+    item.dataset.idx = h;
     item.textContent = String(h).padStart(2,'0');
-    item.onclick = ()=>{ _selectedHour=h; updateScrollHighlight('hourScroll',h); scrollToSelected('hourScroll',h); };
+    item.style.height = ITEM_H+'px';
+    item.onclick = ()=>{ _selectedHour=h; snapTo('hourScroll',h,true); updateHighlight('hourScroll',h); };
     hScroll.appendChild(item);
   }
   for(let m=0;m<60;m+=5){
     const item = document.createElement('div');
-    item.className = 'time-item' + (m===_selectedMin?' selected':'');
+    item.className = 'time-item';
+    item.dataset.idx = m/5;
     item.textContent = String(m).padStart(2,'0');
-    item.onclick = ()=>{ _selectedMin=m; updateScrollHighlight('minScroll',m/5); scrollToSelected('minScroll',m/5); };
+    item.style.height = ITEM_H+'px';
+    item.onclick = ()=>{ _selectedMin=m; snapTo('minScroll',m/5,true); updateHighlight('minScroll',m/5); };
     mScroll.appendChild(item);
   }
 
-  ['','',''].forEach(()=>{
-    const p = document.createElement('div'); p.style.height='48px'; hScroll.appendChild(p);
-    const p2 = document.createElement('div'); p2.style.height='48px'; mScroll.appendChild(p2);
-  });
+  // Add bottom padding
+  for(let i=0;i<PAD;i++){
+    const p = document.createElement('div');
+    p.style.cssText = `height:${ITEM_H}px;flex-shrink:0;`;
+    hScroll.appendChild(p.cloneNode());
+    mScroll.appendChild(p.cloneNode());
+  }
 
-  // Listen for scroll end to update selection
-  hScroll.onscroll = ()=>onScrollEnd(hScroll,'hour');
-  mScroll.onscroll = ()=>onScrollEnd(mScroll,'min');
+  updateHighlight('hourScroll', _selectedHour);
+  updateHighlight('minScroll', _selectedMin/5);
+
+  hScroll.onscroll = ()=>onScrollStop(hScroll,'hour');
+  mScroll.onscroll = ()=>onScrollStop(mScroll,'min');
 }
 
-let _scrollTimer = null;
-function onScrollEnd(el, type){
-  clearTimeout(_scrollTimer);
-  _scrollTimer = setTimeout(()=>{
-    const itemH = 48;
-    const idx = Math.round(el.scrollTop / itemH);
+function snapTo(scrollId, idx, animate){
+  const scroll = document.getElementById(scrollId);
+  const top = idx * ITEM_H;
+  if(animate){
+    scroll.scrollTo({top, behavior:'smooth'});
+  } else {
+    scroll.scrollTop = top;
+  }
+}
+
+function updateHighlight(scrollId, idx){
+  const scroll = document.getElementById(scrollId);
+  scroll.querySelectorAll('.time-item').forEach((item,i)=>{
+    item.classList.toggle('selected', i===idx);
+  });
+}
+
+let _hTimer=null, _mTimer=null;
+function onScrollStop(el, type){
+  const timer = type==='hour' ? _hTimer : _mTimer;
+  clearTimeout(timer);
+  const t = setTimeout(()=>{
+    const idx = Math.round(el.scrollTop / ITEM_H);
     if(type==='hour'){
       _selectedHour = Math.max(0,Math.min(23,idx));
-      updateScrollHighlight('hourScroll',_selectedHour);
+      snapTo('hourScroll',_selectedHour,true);
+      updateHighlight('hourScroll',_selectedHour);
     } else {
       const minIdx = Math.max(0,Math.min(11,idx));
       _selectedMin = minIdx*5;
-      updateScrollHighlight('minScroll',minIdx);
+      snapTo('minScroll',minIdx,true);
+      updateHighlight('minScroll',minIdx);
     }
-  }, 150);
-}
-
-function updateScrollHighlight(scrollId, idx){
-  const scroll = document.getElementById(scrollId);
-  const items = scroll.querySelectorAll('.time-item');
-  items.forEach((item,i)=>item.classList.toggle('selected', i===idx));
-}
-
-function scrollToSelected(scrollId, idx){
-  const scroll = document.getElementById(scrollId);
-  scroll.scrollTop = idx * 48;
+  }, 200);
+  if(type==='hour') _hTimer=t; else _mTimer=t;
 }
 
 function confirmTimePicker(){
@@ -1538,7 +1563,9 @@ window.addEventListener('beforeunload', ()=>{ if(currentPin) sessionStorage.setI
 <div class="time-popup-bg" id="timePickerBg" onclick="closeTimePicker()"></div>
 <div class="time-popup" id="timePickerPopup">
   <div class="time-popup-title">Kies een tijd</div>
-  <div class="time-cols">
+  <div style="position:relative;">
+    <div style="position:absolute;top:50%;left:0;right:0;height:56px;transform:translateY(-50%);background:#4d96ff15;border-top:1.5px solid #4d96ff44;border-bottom:1.5px solid #4d96ff44;border-radius:10px;pointer-events:none;z-index:1;margin:0 4px;"></div>
+  <div class="time-cols" style="position:relative;z-index:2;">
     <div class="time-col">
       <div class="time-col-label">Uur</div>
       <div class="time-scroll" id="hourScroll"></div>
@@ -1548,6 +1575,7 @@ window.addEventListener('beforeunload', ()=>{ if(currentPin) sessionStorage.setI
       <div class="time-col-label">Minuten</div>
       <div class="time-scroll" id="minScroll"></div>
     </div>
+  </div>
   </div>
   <div class="time-popup-actions">
     <button class="btn btn-ghost" style="flex:1" onclick="clearTimePicker()">Wissen</button>
